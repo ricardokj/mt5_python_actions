@@ -1,0 +1,49 @@
+name: mt5_to_pandas
+on:
+  schedule:
+    - cron: '48 12 * * 1-5'
+    - cron: '52 12 * * 1-5'
+
+  workflow_dispatch:
+
+jobs:
+  opening_volume:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Cache Python setup
+        uses: actions/cache@v3
+        with:
+          path: ${{ runner.tool_cache }}/Python/3.11.3  # The path to cache
+          key: python-${{ runner.os }}-3.11.3-${{ hashFiles('**/pyproject.toml') }}
+        id: cache-python
+
+        #Only set up Python if cache was not restored
+      - name: Set up Python 
+        if: steps.cache-python.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.3'
+
+      - name: Cache Python Packages
+        uses: actions/cache@v3
+        with:
+          path: libs
+          key: ${{ runner.os }}-libs-${{ hashFiles('requirements.txt') }}
+
+      - name: Cache MT5
+        uses: actions/cache@v3
+        with:
+          path: 'C:\\Program Files\\MetaTrader 5'
+          key: ${{ runner.os }}-mt5
+
+      - name: Run mt5_to_pandas.py
+        env:
+          MT5_AT_SRV:     ${{ vars.MT5_AT_SRV }} ###### It worked using the IP:port only.. Didn't work with the server name. Sample: 169.57.155.230:6443
+          MT5_AT_ACC:     ${{ secrets.MT5_AT_ACC }}
+          MT5_PW:         ${{ secrets.MT5_PW }}
+          
+        run: |
+          python metatrader/mt5_to_pandas.py
