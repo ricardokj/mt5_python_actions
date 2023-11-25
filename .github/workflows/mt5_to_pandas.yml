@@ -1,10 +1,10 @@
 name: mt5_to_pandas
 on:
-  schedule:
-    - cron: '48 12 * * 1-5'
-    - cron: '52 12 * * 1-5'
-
   workflow_dispatch:
+  # schedule:
+  #   - cron: '48 12 * * 1-5'
+  #   - cron: '52 12 * * 1-5'
+
 
 jobs:
   opening_volume:
