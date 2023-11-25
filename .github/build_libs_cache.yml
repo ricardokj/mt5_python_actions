@@ -1,0 +1,49 @@
+name: build_cache
+on:
+  workflow_dispatch:
+
+jobs:
+  build_cache:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Cache Python setup
+        uses: actions/cache@v3
+        with:
+          path: ${{ runner.tool_cache }}/Python/3.11.3  # The path to cache
+          key: python-${{ runner.os }}-3.11.3-${{ hashFiles('**/pyproject.toml') }}
+        id: cache-python
+
+        #Only set up Python if cache was not restored
+      - name: Set up Python 
+        if: steps.cache-python.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.3'
+
+      - name: Cache Python Packages
+        uses: actions/cache@v3
+        with:
+          path: libs
+          key: ${{ runner.os }}-libs-${{ hashFiles('requirements.txt') }}
+        id: cache-pip
+
+      - name: Run pip install
+        if: steps.cache-pip.outputs.cache-hit != 'true'
+        run: |
+          mkdir ./libs
+          pip install -r requirements.txt --target ./libs --no-user
+
+      - name: Cache MT5
+        uses: actions/cache@v3
+        with:
+          path: 'C:\\Program Files\\MetaTrader 5'
+          key: ${{ runner.os }}-mt5
+        id: cache-mt5
+
+      - name: Install MetaTrader 5 chocolatey
+        if: steps.cache-mt5.outputs.cache-hit != 'true'
+        run: |
+            choco install metatrader5 --pre -y
